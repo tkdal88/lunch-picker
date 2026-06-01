@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍱 양재 점심 추천</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#F5F3EE;--surface:#FFFFFF;--surface2:#EDEBE5;
+    --text:#1A1A18;--text2:#6B6960;--text3:#A09D94;--border:#E0DDD5;
+    --green:#2D6A4F;--green-bg:#D8F3DC;
+    --yellow:#9B6A00;--yellow-bg:#FFF3CD;
+    --orange:#C44B00;--orange-bg:#FFE8D6;
+    --red:#B52C2C;--red-bg:#FDDEDE;
+    --accent:#E8572A;
+    --dessert:#7B5EA7;--dessert-bg:#EDE7F6;
+    --hoesik:#1565C0;--hoesik-bg:#E3F2FD;
+    --radius:12px;--radius-sm:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem 1rem;}
+  .container{max-width:900px;margin:0 auto;}
+  .header{margin-bottom:2rem;}
+  .header h1{font-size:26px;font-weight:700;letter-spacing:-0.5px;}
+  .header h1 span{color:var(--accent);}
+  .header p{font-size:13px;color:var(--text2);margin-top:4px;}
+
+  .pick-section{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:2rem;}
+  @media(max-width:680px){.pick-section{grid-template-columns:1fr;}}
+
+  .pick-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;}
+  .pick-card-label{font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);font-family:'DM Mono',monospace;align-self:flex-start;}
+  .pick-card-label.dessert-label{color:var(--dessert);}
+  .pick-card-label.hoesik-label{color:var(--hoesik);}
+
+  /* mascot */
+  .mascot-wrap{position:relative;width:80px;height:80px;}
+  .mascot-wrap svg{width:80px;height:80px;}
+  .mascot-wrap.bounce{animation:mascotBounce 0.5s ease-in-out;}
+  @keyframes mascotBounce{0%{transform:translateY(0)}25%{transform:translateY(-10px) rotate(-8deg)}60%{transform:translateY(-4px) rotate(5deg)}100%{transform:translateY(0)}}
+
+  /* speech bubble — BELOW mascot */
+  .speech-bubble{
+    background:var(--surface2);border-radius:10px;padding:10px 14px;
+    font-size:13px;font-weight:500;color:var(--text);line-height:1.5;
+    border:1px solid var(--border);transition:all 0.2s;
+    width:100%;min-height:52px;display:flex;align-items:center;justify-content:center;
+    position:relative;
+  }
+  .speech-bubble::before{
+    content:'';position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+    border:8px solid transparent;border-bottom-color:var(--border);border-top:none;
+  }
+  .speech-bubble::after{
+    content:'';position:absolute;top:-6px;left:50%;transform:translateX(-50%);
+    border:7px solid transparent;border-bottom-color:var(--surface2);border-top:none;
+  }
+  .speech-bubble.reveal{background:#fff8f5;border-color:var(--accent);}
+  .speech-bubble.reveal::after{border-bottom-color:#fff8f5;}
+
+  .pick-meta{font-size:12px;color:var(--text2);display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;min-height:22px;}
+  .pick-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;transition:opacity 0.15s,transform 0.1s;}
+  .pick-btn:active{transform:scale(0.97);}
+  .pick-btn:disabled{opacity:0.5;cursor:default;}
+  .pick-btn.lunch{background:var(--accent);color:white;}
+  .pick-btn.lunch:hover:not(:disabled){opacity:0.88;}
+  .pick-btn.dessert{background:var(--dessert);color:white;}
+  .pick-btn.dessert:hover:not(:disabled){opacity:0.88;}
+  .pick-btn.hoesik{background:var(--hoesik);color:white;}
+  .pick-btn.hoesik:hover:not(:disabled){opacity:0.88;}
+
+  .dist-badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500;}
+  .d1{background:var(--green-bg);color:var(--green);}
+  .d2{background:var(--yellow-bg);color:var(--yellow);}
+  .d3{background:var(--orange-bg);color:var(--orange);}
+  .d4{background:var(--red-bg);color:var(--red);}
+  .dd{background:var(--dessert-bg);color:var(--dessert);}
+  .dh{background:var(--hoesik-bg);color:var(--hoesik);}
+
+  .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:0.75rem;}
+  .filter-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all 0.12s;}
+  .filter-btn:hover{border-color:var(--text3);}
+  .filter-btn.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+
+  .cat-tier{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;align-items:center;}
+  .cat-group-btn{padding:5px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all 0.12s;}
+  .cat-group-btn.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+  .cat-sub-btn{padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all 0.12s;}
+  .cat-sub-btn.active{border-color:var(--text);color:var(--text);background:var(--surface2);}
+
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:8px;}
+  .section-title{font-size:14px;font-weight:700;color:var(--text);}
+  .count-badge{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.875rem 1rem;transition:border-color 0.12s;}
+  .card:hover{border-color:var(--text3);}
+  .card-name{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}
+  .card-cat{font-size:11px;color:var(--text2);margin-bottom:4px;}
+  .card-menu{font-size:11px;color:var(--accent);margin-bottom:6px;font-weight:500;}
+  .card-bottom{display:flex;align-items:center;gap:6px;}
+  .card-dist-text{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;}
+  .empty{text-align:center;padding:3rem;color:var(--text3);font-size:14px;}
+  hr{border:none;border-top:1px solid var(--border);margin:2rem 0;}
+  .divider-label{font-size:11px;font-weight:700;letter-spacing:0.08em;color:var(--dessert);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:0.75rem;}
+  .divider-label.hoesik-lbl{color:var(--hoesik);}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🍱 양재역 <span>점심</span> 추천</h1>
+    <p>D&O강남빌딩 기준 (도곡동 956) · 넥슨게임즈 페이코 식권 가맹점</p>
+  </div>
+
+  <div class="pick-section">
+    <!-- 점심 -->
+    <div class="pick-card">
+      <div class="pick-card-label">🎲 오늘의 점심</div>
+      <div class="mascot-wrap" id="mw-lunch">
+        <!-- 블루아카 스타일 치비 캐릭터 (핑크 헤어, 토끼귀) -->
+        <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+          <!-- 토끼귀 -->
+          <ellipse cx="26" cy="16" rx="5" ry="10" fill="#F9C4D0" stroke="#E8A0B4" stroke-width="1.2"/>
+          <ellipse cx="26" cy="16" rx="3" ry="7" fill="#F7A8BF"/>
+          <ellipse cx="54" cy="16" rx="5" ry="10" fill="#F9C4D0" stroke="#E8A0B4" stroke-width="1.2"/>
+          <ellipse cx="54" cy="16" rx="3" ry="7" fill="#F7A8BF"/>
+          <!-- 머리카락 -->
+          <ellipse cx="40" cy="28" rx="18" ry="16" fill="#F4A0C0"/>
+          <ellipse cx="22" cy="34" rx="7" ry="10" fill="#F4A0C0"/>
+          <ellipse cx="58" cy="34" rx="7" ry="10" fill="#F4A0C0"/>
+          <!-- 얼굴 -->
+          <ellipse cx="40" cy="34" rx="15" ry="14" fill="#FDECEA"/>
+          <!-- 눈 흰자 -->
+          <ellipse cx="34" cy="32" rx="5" ry="5.5" fill="white"/>
+          <ellipse cx="46" cy="32" rx="5" ry="5.5" fill="white"/>
+          <!-- 눈동자 -->
+          <ellipse cx="34" cy="33" rx="3.2" ry="3.5" fill="#5BA3E0"/>
+          <ellipse cx="46" cy="33" rx="3.2" ry="3.5" fill="#5BA3E0"/>
+          <!-- 눈 하이라이트 -->
+          <circle cx="35.2" cy="31.5" r="1.2" fill="white"/>
+          <circle cx="47.2" cy="31.5" r="1.2" fill="white"/>
+          <!-- 속눈썹 -->
+          <path d="M29.5 29 Q30 27.5 31 28" stroke="#C07090" stroke-width="0.9" fill="none"/>
+          <path d="M41 29 Q42 27.5 43 28" stroke="#C07090" stroke-width="0.9" fill="none"/>
+          <!-- 볼터치 -->
+          <ellipse cx="29" cy="37" rx="4" ry="2.5" fill="#F9B4C8" opacity="0.6"/>
+          <ellipse cx="51" cy="37" rx="4" ry="2.5" fill="#F9B4C8" opacity="0.6"/>
+          <!-- 입 -->
+          <path d="M36 40 Q40 43 44 40" stroke="#E07090" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+          <!-- 앞머리 -->
+          <path d="M25 28 Q28 20 34 22 Q38 18 40 20 Q43 18 46 22 Q52 20 55 28" fill="#F4A0C0" stroke="none"/>
+          <!-- 몸 (교복) -->
+          <rect x="28" y="47" width="24" height="20" rx="5" fill="#5B8DD9"/>
+          <rect x="35" y="47" width="10" height="8" rx="2" fill="white"/>
+          <!-- 넥타이 -->
+          <polygon points="40,49 38,55 40,57 42,55" fill="#E8572A"/>
+          <!-- 팔 -->
+          <ellipse cx="23" cy="56" rx="5" ry="8" fill="#5B8DD9"/>
+          <ellipse cx="57" cy="56" rx="5" ry="8" fill="#5B8DD9"/>
+          <!-- 손 -->
+          <ellipse cx="23" cy="63" rx="4" ry="4" fill="#FDECEA"/>
+          <ellipse cx="57" cy="63" rx="4" ry="4" fill="#FDECEA"/>
+          <!-- 헤일로 -->
+          <ellipse cx="40" cy="12" rx="12" ry="3" fill="none" stroke="#FFD700" stroke-width="1.8" opacity="0.8"/>
+        </svg>
+      </div>
+      <div class="speech-bubble" id="bubble-lunch">오늘 점심 뭐 먹지? 🤔</div>
+      <div class="pick-meta" id="lunch-meta"></div>
+      <button class="pick-btn lunch" id="btn-lunch" onclick="pickLunch()">🍽 점심 뽑기</button>
+    </div>
+
+    <!-- 디저트 -->
+    <div class="pick-card">
+      <div class="pick-card-label dessert-label">☕ 오늘의 디저트</div>
+      <div class="mascot-wrap" id="mw-dessert">
+        <!-- 블루아카 스타일 치비 (보라 헤어, 고양이귀) -->
+        <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+          <!-- 고양이귀 -->
+          <polygon points="22,24 18,10 29,20" fill="#C9A0DC" stroke="#A87BC0" stroke-width="1"/>
+          <polygon points="23,23 20,13 28,21" fill="#E8D0F0"/>
+          <polygon points="58,24 62,10 51,20" fill="#C9A0DC" stroke="#A87BC0" stroke-width="1"/>
+          <polygon points="57,23 60,13 52,21" fill="#E8D0F0"/>
+          <!-- 머리카락 -->
+          <ellipse cx="40" cy="28" rx="18" ry="16" fill="#B07FD0"/>
+          <ellipse cx="22" cy="35" rx="7" ry="9" fill="#B07FD0"/>
+          <ellipse cx="58" cy="35" rx="7" ry="9" fill="#B07FD0"/>
+          <!-- 얼굴 -->
+          <ellipse cx="40" cy="34" rx="15" ry="14" fill="#FDF0FA"/>
+          <!-- 눈 -->
+          <ellipse cx="34" cy="32" rx="5" ry="5.5" fill="white"/>
+          <ellipse cx="46" cy="32" rx="5" ry="5.5" fill="white"/>
+          <ellipse cx="34" cy="33" rx="3.2" ry="3.5" fill="#9B59B6"/>
+          <ellipse cx="46" cy="33" rx="3.2" ry="3.5" fill="#9B59B6"/>
+          <circle cx="35.2" cy="31.5" r="1.2" fill="white"/>
+          <circle cx="47.2" cy="31.5" r="1.2" fill="white"/>
+          <!-- 속눈썹 -->
+          <path d="M29.5 29 Q30 27.5 31 28" stroke="#8050A0" stroke-width="0.9" fill="none"/>
+          <path d="M41 29 Q42 27.5 43 28" stroke="#8050A0" stroke-width="0.9" fill="none"/>
+          <!-- 볼터치 -->
+          <ellipse cx="29" cy="37" rx="4" ry="2.5" fill="#DDA0E8" opacity="0.6"/>
+          <ellipse cx="51" cy="37" rx="4" ry="2.5" fill="#DDA0E8" opacity="0.6"/>
+          <!-- 입 (웃음) -->
+          <path d="M36 40 Q40 44 44 40" stroke="#A060B0" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+          <!-- 앞머리 -->
+          <path d="M25 28 Q28 19 34 22 Q38 17 40 20 Q43 17 46 22 Q52 19 55 28" fill="#B07FD0"/>
+          <!-- 몸 -->
+          <rect x="28" y="47" width="24" height="20" rx="5" fill="#7B5EA7"/>
+          <rect x="35" y="47" width="10" height="8" rx="2" fill="white"/>
+          <polygon points="40,49 38,55 40,57 42,55" fill="#C9A0DC"/>
+          <!-- 팔 -->
+          <ellipse cx="23" cy="56" rx="5" ry="8" fill="#7B5EA7"/>
+          <ellipse cx="57" cy="56" rx="5" ry="8" fill="#7B5EA7"/>
+          <ellipse cx="23" cy="63" rx="4" ry="4" fill="#FDF0FA"/>
+          <ellipse cx="57" cy="63" rx="4" ry="4" fill="#FDF0FA"/>
+          <!-- 커피잔 들고있음 -->
+          <rect x="54" y="60" width="9" height="7" rx="2" fill="#8B5E3C"/>
+          <path d="M63 62 Q66 63.5 63 65" stroke="#8B5E3C" stroke-width="1.5" fill="none"/>
+          <!-- 헤일로 -->
+          <ellipse cx="40" cy="12" rx="12" ry="3" fill="none" stroke="#C9A0DC" stroke-width="1.8" opacity="0.8"/>
+        </svg>
+      </div>
+      <div class="speech-bubble" id="bubble-dessert">달달한 거 먹고 싶다 ☕</div>
+      <div class="pick-meta" id="dessert-meta"></div>
+      <button class="pick-btn dessert" id="btn-dessert" onclick="pickDessert()">🧁 디저트 뽑기</button>
+    </div>
+
+    <!-- 회식 -->
+    <div class="pick-card">
+      <div class="pick-card-label hoesik-label">🍻 오늘의 회식</div>
+      <div class="mascot-wrap" id="mw-hoesik">
+        <!-- 블루아카 스타일 치비 (파랑 헤어, 안경) -->
+        <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+          <!-- 머리카락 -->
+          <ellipse cx="40" cy="28" rx="18" ry="17" fill="#4A90D9"/>
+          <ellipse cx="22" cy="35" rx="7" ry="9" fill="#4A90D9"/>
+          <ellipse cx="58" cy="35" rx="7" ry="9" fill="#4A90D9"/>
+          <!-- 얼굴 -->
+          <ellipse cx="40" cy="34" rx="15" ry="14" fill="#FDECEA"/>
+          <!-- 눈 -->
+          <ellipse cx="34" cy="32" rx="5" ry="5.5" fill="white"/>
+          <ellipse cx="46" cy="32" rx="5" ry="5.5" fill="white"/>
+          <ellipse cx="34" cy="33" rx="3.2" ry="3.5" fill="#1565C0"/>
+          <ellipse cx="46" cy="33" rx="3.2" ry="3.5" fill="#1565C0"/>
+          <circle cx="35.2" cy="31.5" r="1.2" fill="white"/>
+          <circle cx="47.2" cy="31.5" r="1.2" fill="white"/>
+          <!-- 안경 -->
+          <rect x="28" y="28" width="11" height="9" rx="3" fill="none" stroke="#555" stroke-width="1.4"/>
+          <rect x="41" y="28" width="11" height="9" rx="3" fill="none" stroke="#555" stroke-width="1.4"/>
+          <line x1="39" y1="32" x2="41" y2="32" stroke="#555" stroke-width="1.4"/>
+          <!-- 볼터치 -->
+          <ellipse cx="29" cy="38" rx="4" ry="2.5" fill="#F9B4C8" opacity="0.55"/>
+          <ellipse cx="51" cy="38" rx="4" ry="2.5" fill="#F9B4C8" opacity="0.55"/>
+          <!-- 입 -->
+          <path d="M36 41 Q40 44 44 41" stroke="#C07070" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+          <!-- 앞머리 -->
+          <path d="M24 28 Q28 18 35 22 Q38 17 40 20 Q43 17 46 22 Q52 18 56 28" fill="#4A90D9"/>
+          <!-- 몸 -->
+          <rect x="28" y="47" width="24" height="20" rx="5" fill="#1565C0"/>
+          <rect x="35" y="47" width="10" height="8" rx="2" fill="white"/>
+          <polygon points="40,49 38,55 40,57 42,55" fill="#FFD700"/>
+          <!-- 팔 -->
+          <ellipse cx="23" cy="56" rx="5" ry="8" fill="#1565C0"/>
+          <ellipse cx="57" cy="56" rx="5" ry="8" fill="#1565C0"/>
+          <ellipse cx="23" cy="63" rx="4" ry="4" fill="#FDECEA"/>
+          <ellipse cx="57" cy="63" rx="4" ry="4" fill="#FDECEA"/>
+          <!-- 맥주잔 -->
+          <rect x="53" y="57" width="8" height="9" rx="2" fill="#FDD835" opacity="0.9"/>
+          <rect x="53" y="57" width="8" height="3" rx="1" fill="white" opacity="0.8"/>
+          <path d="M61 60 Q64 61 61 63" stroke="#FDD835" stroke-width="1.5" fill="none"/>
+          <!-- 헤일로 -->
+          <ellipse cx="40" cy="11" rx="12" ry="3" fill="none" stroke="#4A90D9" stroke-width="1.8" opacity="0.8"/>
+        </svg>
+      </div>
+      <div class="speech-bubble" id="bubble-hoesik">오늘 회식 어디서 할까요? 🍺</div>
+      <div class="pick-meta" id="hoesik-meta"></div>
+      <button class="pick-btn hoesik" id="btn-hoesik" onclick="pickHoesik()">🥂 회식 뽑기</button>
+    </div>
+  </div>
+
+  <!-- Lunch filters -->
+  <div class="filter-row" id="dist-filters">
+    <button class="filter-btn active" onclick="setDist('all',this)">전체 거리</button>
+    <button class="filter-btn" onclick="setDist('d1',this)">🟢 ~300m</button>
+    <button class="filter-btn" onclick="setDist('d2',this)">🟡 ~500m</button>
+    <button class="filter-btn" onclick="setDist('d3',this)">🟠 ~1km</button>
+    <button class="filter-btn" onclick="setDist('d4',this)">🔴 1km+</button>
+  </div>
+  <div class="cat-tier" id="cat-group-row"></div>
+  <div class="cat-tier" id="cat-sub-row"></div>
+  <div class="section-header">
+    <div class="section-title">식사 메뉴</div>
+    <div class="count-badge" id="lunch-count"></div>
+  </div>
+  <div class="grid" id="lunch-grid"></div>
+
+  <hr>
+  <div class="divider-label">☕ 카페 &amp; 디저트</div>
+  <div class="filter-row" id="dessert-dist-filters">
+    <button class="filter-btn active" onclick="setDessertDist('all',this)">전체 거리</button>
+    <button class="filter-btn" onclick="setDessertDist('d1',this)">🟢 ~300m</button>
+    <button class="filter-btn" onclick="setDessertDist('d2',this)">🟡 ~500m</button>
+    <button class="filter-btn" onclick="setDessertDist('d3',this)">🟠 ~1km</button>
+    <button class="filter-btn" onclick="setDessertDist('d4',this)">🔴 1km+</button>
+  </div>
+  <div class="section-header">
+    <div class="section-title">카페 &amp; 디저트</div>
+    <div class="count-badge" id="dessert-count"></div>
+  </div>
+  <div class="grid" id="dessert-grid"></div>
+
+  <hr>
+  <div class="divider-label hoesik-lbl">🍻 회식 장소</div>
+  <div class="filter-row" id="hoesik-dist-filters">
+    <button class="filter-btn active" onclick="setHoesikDist('all',this)">전체 거리</button>
+    <button class="filter-btn" onclick="setHoesikDist('d1',this)">🟢 ~300m</button>
+    <button class="filter-btn" onclick="setHoesikDist('d2',this)">🟡 ~500m</button>
+    <button class="filter-btn" onclick="setHoesikDist('d3',this)">🟠 ~1km</button>
+    <button class="filter-btn" onclick="setHoesikDist('d4',this)">🔴 1km+</button>
+  </div>
+  <div class="section-header">
+    <div class="section-title">회식 장소</div>
+    <div class="count-badge" id="hoesik-count"></div>
+  </div>
+  <div class="grid" id="hoesik-grid"></div>
+</div>
+
+<script>
+const BASE={lat:37.4853306,lng:127.0366142};
+function deg2rad(d){return d*Math.PI/180;}
+function calcDist(a,b){const R=6371000,dLat=deg2rad(b.lat-a.lat),dLng=deg2rad(b.lng-a.lng);const x=Math.sin(dLat/2)**2+Math.cos(deg2rad(a.lat))*Math.cos(deg2rad(b.lat))*Math.sin(dLng/2)**2;return Math.round(R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)));}
+function distClass(m){return m<=300?'d1':m<=500?'d2':m<=1000?'d3':'d4';}
+function distLabel(c){return{d1:'🟢 300m 이내',d2:'🟡 300~500m',d3:'🟠 500m~1km',d4:'🔴 1km 이상'}[c];}
+function walkMin(m){return Math.round(m/70);}
+
+const raw=[
+  {name:'어머니집',group:'한식',cat:'한식',menu:'생선구이·백반',type:'lunch',lat:37.4866,lng:127.0390},
+  {name:'오대산산채전문점',group:'한식',cat:'한식',menu:'산채비빔밥·정식',type:'lunch',lat:37.4839,lng:127.0377},
+  {name:'두두',group:'한식',cat:'한식',menu:'백반·한식',type:'lunch',lat:37.4862,lng:127.0375},
+  {name:'양계옥',group:'한식',cat:'한식',menu:'닭볶음탕·백반',type:'lunch',lat:37.4849,lng:127.0356},
+  {name:'영이네',group:'한식',cat:'한식',menu:'제육볶음·백반',type:'lunch',lat:37.4855,lng:127.0382},
+  {name:'난지당',group:'한식',cat:'한식',menu:'백반·한식',type:'lunch',lat:37.4853,lng:127.0356},
+  {name:'수정골한상',group:'한식',cat:'한식',menu:'한정식',type:'lunch',lat:37.4853,lng:127.0374},
+  {name:'왕산골',group:'한식',cat:'한식',menu:'백반·한식',type:'lunch',lat:37.4862,lng:127.0375},
+  {name:'예당',group:'한식',cat:'한식',menu:'백반·한식',type:'lunch',lat:37.4857,lng:127.0381},
+  {name:'옥된장 양재점',group:'한식',cat:'한식',menu:'된장찌개·백반',type:'lunch',lat:37.4821,lng:127.0345},
+  {name:'명갈비곰탕',group:'한식',cat:'한식',menu:'곰탕·갈비탕',type:'lunch',lat:37.4821,lng:127.0348},
+  {name:'양재오제섞어',group:'한식',cat:'한식',menu:'오징어·낙지볶음',type:'lunch',lat:37.4821,lng:127.0344},
+  {name:'오부찌 양재점',group:'한식',cat:'한식',menu:'백반·비빔밥',type:'lunch',lat:37.4826,lng:127.0346},
+  {name:'미소마을',group:'한식',cat:'한식',menu:'백반·한식',type:'lunch',lat:37.4826,lng:127.0347},
+  {name:'불로삼계백숙',group:'한식',cat:'한식',menu:'삼계탕·백숙',type:'lunch',lat:37.4821,lng:127.0347},
+  {name:'PPK키친 양재점',group:'한식',cat:'한식',menu:'제육볶음·백반',type:'lunch',lat:37.4858,lng:127.0365},
+  {name:'하우림 양재점',group:'한식',cat:'한식',menu:'백반·한식',type:'lunch',lat:37.4848,lng:127.0349},
+  {name:'월계랑닭갈비',group:'한식',cat:'닭갈비',menu:'닭갈비',type:'lunch',lat:37.4854,lng:127.0372},
+  {name:'부대옥 양재역점',group:'한식',cat:'탕·찌개',menu:'부대찌개',type:'lunch',lat:37.4845,lng:127.0367},
+  {name:'김치뚝딱 양재점',group:'한식',cat:'탕·찌개',menu:'김치찌개',type:'lunch',lat:37.4847,lng:127.0348},
+  {name:'식겁라면순두부',group:'한식',cat:'탕·찌개',menu:'순두부찌개·라면',type:'lunch',lat:37.4865,lng:127.0382},
+  {name:'만두랑 양재본점',group:'한식',cat:'탕·찌개',menu:'만두·만둣국',type:'lunch',lat:37.4847,lng:127.0349},
+  {name:'남원골추어탕',group:'한식',cat:'탕·찌개',menu:'추어탕',type:'lunch',lat:37.4846,lng:127.0347},
+  {name:'양재족발 참족',group:'한식',cat:'탕·찌개',menu:'부대찌개',type:'lunch',lat:37.4858,lng:127.0382},
+  {name:'늘봄족발보쌈',group:'한식',cat:'족발·보쌈',menu:'족발·보쌈',type:'lunch',lat:37.4831,lng:127.0353},
+  {name:'탐라순대국감자탕',group:'한식',cat:'순대·국밥',menu:'순대국·감자탕',type:'lunch',lat:37.4822,lng:127.0348},
+  {name:'콩나루콩나물국밥',group:'한식',cat:'순대·국밥',menu:'콩나물국밥',type:'lunch',lat:37.4820,lng:127.0347},
+  {name:'명품백암왕순대',group:'한식',cat:'순대·국밥',menu:'순대·순댓국',type:'lunch',lat:37.4849,lng:127.0356},
+  {name:'정성순대 양재역점',group:'한식',cat:'순대·국밥',menu:'순대전골·순댓국',type:'lunch',lat:37.4840,lng:127.0357},
+  {name:'양재순대',group:'한식',cat:'순대·국밥',menu:'순대·순댓국',type:'lunch',lat:37.4822,lng:127.0348},
+  {name:'석화촌',group:'한식',cat:'해물',menu:'굴요리·굴수제비',type:'lunch',lat:37.4854,lng:127.0372},
+  {name:'문어세상해천탕',group:'한식',cat:'해물',menu:'해천탕·문어요리',type:'lunch',lat:37.4821,lng:127.0345},
+  {name:'신전떡볶이 도곡점',group:'한식',cat:'분식',menu:'떡볶이',type:'lunch',lat:37.4858,lng:127.0369},
+  {name:'국미당종합분식',group:'한식',cat:'분식',menu:'떡볶이·김밥',type:'lunch',lat:37.4849,lng:127.0360},
+  {name:'후토루 양재점',group:'한식',cat:'분식',menu:'쌀국수·분식',type:'lunch',lat:37.4824,lng:127.0345},
+  {name:'서울김밥 양재역점',group:'한식',cat:'분식',menu:'김밥',type:'lunch',lat:37.4836,lng:127.0356},
+  {name:'김밥천국 양재역점',group:'한식',cat:'분식',menu:'김밥·분식',type:'lunch',lat:37.4824,lng:127.0345},
+  {name:'뜸들이다 양재점',group:'한식',cat:'분식',menu:'도시락·컵밥',type:'lunch',lat:37.4826,lng:127.0348},
+  {name:'개수리막국수',group:'한식',cat:'국수',menu:'막국수',type:'lunch',lat:37.4842,lng:127.0354},
+  {name:'153구포국수',group:'한식',cat:'국수',menu:'구포국수·우동',type:'lunch',lat:37.4850,lng:127.0356},
+  {name:'명동할머니국수',group:'한식',cat:'국수',menu:'잔치국수',type:'lunch',lat:37.4862,lng:127.0376},
+  {name:'육회바른연어',group:'한식',cat:'해물',menu:'육회·연어',type:'lunch',lat:37.4845,lng:127.0362},
+  // 일식
+  {name:'히노카츠',group:'일식',cat:'돈가스',menu:'돈가스',type:'lunch',lat:37.4859,lng:127.0366},
+  {name:'돈까스하우스',group:'일식',cat:'돈가스',menu:'돈가스',type:'lunch',lat:37.4861,lng:127.0367},
+  {name:'미소야 양재점',group:'일식',cat:'돈가스',menu:'돈가스·카레우동',type:'lunch',lat:37.4844,lng:127.0378},
+  {name:'강남돈가스 본점',group:'일식',cat:'돈가스',menu:'돈가스',type:'lunch',lat:37.4828,lng:127.0349},
+  {name:'양재카츠',group:'일식',cat:'돈가스',menu:'돈가스',type:'lunch',lat:37.4818,lng:127.0344},
+  {name:'카츠공방 양재점',group:'일식',cat:'돈가스',menu:'수제돈가스',type:'lunch',lat:37.4821,lng:127.0345},
+  {name:'돈스라',group:'일식',cat:'돈가스',menu:'돈가스',type:'lunch',lat:37.4827,lng:127.0349},
+  {name:'쿠니라멘',group:'일식',cat:'라멘',menu:'라멘',type:'lunch',lat:37.4836,lng:127.0356},
+  {name:'멘츠루 양재점',group:'일식',cat:'라멘',menu:'라멘',type:'lunch',lat:37.4824,lng:127.0348},
+  {name:'소노야 양재역점',group:'일식',cat:'우동·소바',menu:'우동·소바',type:'lunch',lat:37.4829,lng:127.0352},
+  {name:'손수동',group:'일식',cat:'우동·소바',menu:'우동·소바',type:'lunch',lat:37.4830,lng:127.0356},
+  {name:'스노우폭스 양재역점',group:'일식',cat:'초밥·롤',menu:'초밥·롤',type:'lunch',lat:37.4820,lng:127.0346},
+  {name:'호랑이초밥 양재점',group:'일식',cat:'초밥·롤',menu:'초밥·롤',type:'lunch',lat:37.4820,lng:127.0346},
+  // 중식
+  {name:'화차이',group:'중식',cat:'중식',menu:'중국요리',type:'lunch',lat:37.4828,lng:127.0356},
+  {name:'미몽 양재본점',group:'중식',cat:'중식',menu:'짜장면·짬뽕',type:'lunch',lat:37.4830,lng:127.0357},
+  {name:'사천루',group:'중식',cat:'중식',menu:'사천요리',type:'lunch',lat:37.4858,lng:127.0375},
+  {name:'마차이짬뽕',group:'중식',cat:'중식',menu:'짬뽕',type:'lunch',lat:37.4823,lng:127.0349},
+  {name:'명정루 양재',group:'중식',cat:'중식',menu:'짜장면·중식',type:'lunch',lat:37.4822,lng:127.0348},
+  {name:'신향원양꼬치마라탕',group:'중식',cat:'양꼬치·마라탕',menu:'양꼬치·마라탕',type:'lunch',lat:37.4829,lng:127.0351},
+  // 양식
+  {name:'스파게티스토리',group:'양식',cat:'파스타',menu:'스파게티·파스타',type:'lunch',lat:37.4862,lng:127.0365},
+  {name:'라그릴리아 양재점',group:'양식',cat:'이탈리안',menu:'이탈리아요리·파스타',type:'lunch',lat:37.4820,lng:127.0358},
+  {name:'이올로화덕피자',group:'양식',cat:'피자',menu:'화덕피자',type:'lunch',lat:37.4833,lng:127.0352},
+  {name:'피끄니크',group:'양식',cat:'양식',menu:'양식',type:'lunch',lat:37.4854,lng:127.0372},
+  {name:'브리즈 양재',group:'양식',cat:'양식',menu:'양식·파스타',type:'lunch',lat:37.4829,lng:127.0352},
+  {name:'제레미버거',group:'양식',cat:'햄버거',menu:'수제버거',type:'lunch',lat:37.4856,lng:127.0373},
+  {name:'크라이치즈버거',group:'양식',cat:'햄버거',menu:'수제버거',type:'lunch',lat:37.4829,lng:127.0350},
+  {name:'버거킹 양재점',group:'양식',cat:'햄버거',menu:'햄버거',type:'lunch',lat:37.4824,lng:127.0345},
+  {name:'롯데리아 양재역점',group:'양식',cat:'햄버거',menu:'햄버거',type:'lunch',lat:37.4826,lng:127.0348},
+  {name:'맥도날드 양재점',group:'양식',cat:'햄버거',menu:'햄버거',type:'lunch',lat:37.4820,lng:127.0345},
+  {name:'호앙비엣 양재역점',group:'양식',cat:'베트남',menu:'쌀국수·분짜',type:'lunch',lat:37.4824,lng:127.0348},
+  // 기타
+  {name:'샐러디치오도씨',group:'기타',cat:'샐러드',menu:'샐러드·포케',type:'lunch',lat:37.4869,lng:127.0388},
+  {name:'영영샐러드 도곡점',group:'기타',cat:'샐러드',menu:'샐러드',type:'lunch',lat:37.4865,lng:127.0382},
+  {name:'미트앤샐러드',group:'기타',cat:'샐러드',menu:'샐러드·고기',type:'lunch',lat:37.4859,lng:127.0366},
+  {name:'훅트포케 양재점',group:'기타',cat:'샐러드',menu:'포케·샐러드',type:'lunch',lat:37.4827,lng:127.0349},
+  {name:'이삭토스트 양재역점',group:'기타',cat:'샌드위치·토스트',menu:'토스트',type:'lunch',lat:37.4856,lng:127.0373},
+  {name:'이삭토스트 서초구청점',group:'기타',cat:'샌드위치·토스트',menu:'토스트',type:'lunch',lat:37.4822,lng:127.0348},
+  {name:'써브웨이 양재역점',group:'기타',cat:'샌드위치·토스트',menu:'샌드위치',type:'lunch',lat:37.4839,lng:127.0356},
+  {name:'샌드워커',group:'기타',cat:'샌드위치·토스트',menu:'샌드위치',type:'lunch',lat:37.4836,lng:127.0356},
+  {name:'양지수제샌드위치',group:'기타',cat:'샌드위치·토스트',menu:'수제샌드위치',type:'lunch',lat:37.4833,lng:127.0352},
+  {name:'압구정샌드위치 서초직영점',group:'기타',cat:'샌드위치·토스트',menu:'샌드위치',type:'lunch',lat:37.4812,lng:127.0340},
+  {name:'꿍닭꿍닭 도곡본점',group:'기타',cat:'치킨',menu:'닭강정·치킨',type:'lunch',lat:37.4853,lng:127.0381},
+  {name:'퀸즈가든 양재점',group:'기타',cat:'샤브샤브',menu:'샤브샤브',type:'lunch',lat:37.4836,lng:127.0350},
+  {name:'샤브온당 양재역점',group:'기타',cat:'샤브샤브',menu:'샤브샤브',type:'lunch',lat:37.4826,lng:127.0346},
+  {name:'양재타워 구내식당',group:'기타',cat:'구내식당',menu:'구내식당',type:'lunch',lat:37.4852,lng:127.0358},
+  // 디저트
+  {name:'라비르',cat:'카페',menu:'카페·디저트',type:'dessert',lat:37.4845,lng:127.0359},
+  {name:'아벡제이베이커리',cat:'베이커리',menu:'빵·베이커리',type:'dessert',lat:37.4870,lng:127.0383},
+  {name:'매머드익스프레스',cat:'카페',menu:'커피·음료',type:'dessert',lat:37.4860,lng:127.0367},
+  {name:'오딸레',cat:'아이스크림',menu:'아이스크림',type:'dessert',lat:37.4858,lng:127.0369},
+  {name:'그릭박스 도곡양재점',cat:'카페',menu:'그릭요거트·카페',type:'dessert',lat:37.4853,lng:127.0360},
+  {name:'공차 양재역점',cat:'음료',menu:'버블티·음료',type:'dessert',lat:37.4838,lng:127.0358},
+  {name:'메가MGC커피 양재역점',cat:'카페',menu:'커피',type:'dessert',lat:37.4849,lng:127.0356},
+  {name:'피트앤브레드',cat:'베이커리',menu:'빵·베이커리',type:'dessert',lat:37.4854,lng:127.0373},
+  {name:'팀홀튼 양재역점',cat:'카페',menu:'커피·도넛',type:'dessert',lat:37.4854,lng:127.0372},
+  {name:'프릳츠 양재점',cat:'카페',menu:'스페셜티커피·빵',type:'dessert',lat:37.4826,lng:127.0349},
+  {name:'드림커피 서초점',cat:'카페',menu:'커피',type:'dessert',lat:37.4824,lng:127.0349},
+  {name:'던킨 양재사옥점',cat:'베이커리',menu:'도넛·커피',type:'dessert',lat:37.4820,lng:127.0358},
+  {name:'토다 베이글 양재점',cat:'베이커리',menu:'베이글',type:'dessert',lat:37.4820,lng:127.0348},
+  {name:'요커 양재점',cat:'카페',menu:'카페·디저트',type:'dessert',lat:37.4849,lng:127.0360},
+  // 회식
+  {name:'잰부닥',cat:'고기구이',menu:'무쇠솥밥·삼겹살',type:'hoesik',lat:37.4853,lng:127.0364},
+  {name:'양재화로by설화한우',cat:'소고기구이',menu:'한우구이',type:'hoesik',lat:37.4853,lng:127.0365},
+  {name:'육즙관리소 양재역점',cat:'고기구이',menu:'삼겹살·목살',type:'hoesik',lat:37.4854,lng:127.0373},
+  {name:'정고기 양재본점',cat:'고기구이',menu:'갈비·삼겹살',type:'hoesik',lat:37.4846,lng:127.0348},
+  {name:'삼산회관 양재본점',cat:'고기구이',menu:'삼겹살·갈비',type:'hoesik',lat:37.4845,lng:127.0347},
+  {name:'장수정육식당',cat:'정육식당',menu:'정육구이',type:'hoesik',lat:37.4826,lng:127.0348},
+  {name:'자인뭉티기',cat:'소고기구이',menu:'육사시미·소고기구이',type:'hoesik',lat:37.4824,lng:127.0348},
+  {name:'금강수림',cat:'고기구이',menu:'주물럭·장어주물럭',type:'hoesik',lat:37.4854,lng:127.0372},
+  {name:'곱창왕김형제',cat:'곱창·막창',menu:'곱창·막창',type:'hoesik',lat:37.4854,lng:127.0372},
+  {name:'진여사댁',cat:'요리주점',menu:'요리주점',type:'hoesik',lat:37.4842,lng:127.0347},
+  {name:'아리노마마',cat:'이자카야',menu:'이자카야·일식',type:'hoesik',lat:37.4849,lng:127.0356},
+];
+
+const data=raw.map(r=>{const m=calcDist(BASE,{lat:r.lat,lng:r.lng});return{...r,distM:m,distC:distClass(m)};});
+const lunchData=data.filter(r=>r.type==='lunch');
+const dessertData=data.filter(r=>r.type==='dessert');
+const hoesikData=data.filter(r=>r.type==='hoesik');
+
+const GROUPS=['전체','한식','일식','중식','양식','기타'];
+const subCatMap={};
+GROUPS.filter(g=>g!=='전체').forEach(g=>{subCatMap[g]=[...new Set(lunchData.filter(r=>r.group===g).map(r=>r.cat))].sort();});
+
+let activeDist='all',activeCatGroup='all',activeCatSub='all';
+let activeDessertDist='all',activeHoesikDist='all';
+
+function buildCatFilters(){
+  document.getElementById('cat-group-row').innerHTML=GROUPS.map(g=>`<button class="cat-group-btn${g==='전체'?' active':''}" onclick="setCatGroup('${g==='전체'?'all':g}',this)">${g}</button>`).join('');
+  document.getElementById('cat-sub-row').innerHTML='';
+}
+function renderSubCats(group){
+  const sr=document.getElementById('cat-sub-row');
+  if(group==='all'){sr.innerHTML='';return;}
+  sr.innerHTML=`<button class="cat-sub-btn active" onclick="setCatSub('all',this)">전체</button>`+(subCatMap[group]||[]).map(c=>`<button class="cat-sub-btn" onclick="setCatSub('${c}',this)">${c}</button>`).join('');
+}
+function setDist(d,el){activeDist=d;document.querySelectorAll('#dist-filters .filter-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderLunch();}
+function setDessertDist(d,el){activeDessertDist=d;document.querySelectorAll('#dessert-dist-filters .filter-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderDessert();}
+function setHoesikDist(d,el){activeHoesikDist=d;document.querySelectorAll('#hoesik-dist-filters .filter-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderHoesik();}
+function setCatGroup(g,el){activeCatGroup=g;activeCatSub='all';document.querySelectorAll('#cat-group-row .cat-group-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderSubCats(g);renderLunch();}
+function setCatSub(c,el){activeCatSub=c;document.querySelectorAll('#cat-sub-row .cat-sub-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderLunch();}
+
+function filteredLunch(){return lunchData.filter(r=>(activeDist==='all'||r.distC===activeDist)&&(activeCatGroup==='all'||r.group===activeCatGroup)&&(activeCatSub==='all'||r.cat===activeCatSub)).sort((a,b)=>a.distM-b.distM);}
+function filteredDessert(){return dessertData.filter(r=>activeDessertDist==='all'||r.distC===activeDessertDist).sort((a,b)=>a.distM-b.distM);}
+function filteredHoesik(){return hoesikData.filter(r=>activeHoesikDist==='all'||r.distC===activeHoesikDist).sort((a,b)=>a.distM-b.distM);}
+
+function cardHTML(r,bo){const bc=bo||r.distC;const bl=bo==='dd'?'☕ 디저트':bo==='dh'?'🍻 회식':distLabel(r.distC);return`<div class="card"><div class="card-name" title="${r.name}">${r.name}</div><div class="card-cat">${r.cat}</div><div class="card-menu">${r.menu}</div><div class="card-bottom"><span class="dist-badge ${bc}">${bl}</span><span class="card-dist-text">${r.distM}m</span></div></div>`;}
+function renderLunch(){const l=filteredLunch();document.getElementById('lunch-count').textContent=`${l.length}개`;document.getElementById('lunch-grid').innerHTML=l.length?l.map(r=>cardHTML(r)).join(''):'<div class="empty">해당 조건의 식당이 없어요</div>';}
+function renderDessert(){const l=filteredDessert();document.getElementById('dessert-count').textContent=`${l.length}개`;document.getElementById('dessert-grid').innerHTML=l.length?l.map(r=>cardHTML(r,'dd')).join(''):'<div class="empty">해당 조건의 카페가 없어요</div>';}
+function renderHoesik(){const l=filteredHoesik();document.getElementById('hoesik-count').textContent=`${l.length}개`;document.getElementById('hoesik-grid').innerHTML=l.length?l.map(r=>cardHTML(r,'dh')).join(''):'<div class="empty">해당 조건의 회식 장소가 없어요</div>';}
+
+const SUSPENSE=[
+  ['두구...','두구두구...','두구두구두구...! 🥁'],
+  ['과연 오늘의 선택은...','운명의 손길이...','결정됐습니다!! ✨'],
+  ['에이~ 이건 좀...','그것도 아니고...','바로 이거야!! 🎯'],
+  ['냐하...','냐하하...','냐하하하!! 😈'],
+];
+
+function animatePick(mwId,bubbleId,btnId,list,metaId){
+  if(!list.length)return;
+  const mw=document.getElementById(mwId);
+  const bubble=document.getElementById(bubbleId);
+  const btn=document.getElementById(btnId);
+  btn.disabled=true;
+  bubble.classList.remove('reveal');
+  const seq=SUSPENSE[Math.floor(Math.random()*SUSPENSE.length)];
+  let step=0;
+  bubble.textContent=seq[0];
+  mw.classList.add('bounce');
+  setTimeout(()=>mw.classList.remove('bounce'),500);
+  const iv=setInterval(()=>{
+    step++;
+    if(step<seq.length){
+      bubble.textContent=seq[step];
+      mw.classList.add('bounce');
+      setTimeout(()=>mw.classList.remove('bounce'),500);
+    } else {
+      clearInterval(iv);
+      const r=list[Math.floor(Math.random()*list.length)];
+      bubble.classList.add('reveal');
+      bubble.innerHTML=`<span style="font-weight:700;font-size:14px;">${r.name}</span><br><span style="font-size:11px;color:var(--text2)">${r.menu}</span>`;
+      document.getElementById(metaId).innerHTML=`<span class="dist-badge ${r.distC}">${distLabel(r.distC)}</span><span style="font-size:11px;color:var(--text3)">도보 약 ${walkMin(r.distM)}분 (${r.distM}m)</span>`;
+      mw.classList.add('bounce');
+      setTimeout(()=>mw.classList.remove('bounce'),500);
+      btn.disabled=false;
+    }
+  },650);
+}
+
+function pickLunch(){animatePick('mw-lunch','bubble-lunch','btn-lunch',filteredLunch(),'lunch-meta');}
+function pickDessert(){animatePick('mw-dessert','bubble-dessert','btn-dessert',filteredDessert(),'dessert-meta');}
+function pickHoesik(){animatePick('mw-hoesik','bubble-hoesik','btn-hoesik',filteredHoesik(),'hoesik-meta');}
+
+buildCatFilters();renderLunch();renderDessert();renderHoesik();
+</script>
+</body>
+</html>
